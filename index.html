@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My To-Do App</title>
+  <style>
+    body { font-family: Arial; max-width: 500px; margin: 40px auto; padding: 0 16px; }
+    h1 { text-align: center; }
+    #row { display: flex; gap: 8px; }
+    #title { flex: 1; padding: 10px; font-size: 16px; }
+    button { padding: 10px 14px; cursor: pointer; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #ddd; list-style: none; }
+    .done span { text-decoration: line-through; color: gray; }
+    ul { padding: 0; }
+  </style>
+</head>
+<body>
+  <h1>My To-Do List</h1>
+  <div id="row">
+    <input id="title" placeholder="Puthu task ezhudhunga">
+    <button onclick="addTodo()">Add</button>
+  </div>
+  <ul id="list"></ul>
+
+  <script>
+    async function load() {
+      const res = await fetch('/todos');
+      const todos = await res.json();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      todos.forEach(t => {
+        const li = document.createElement('li');
+        if (t.done) li.className = 'done';
+        li.innerHTML = '<span onclick="toggle(' + t.id + ',' + !t.done + ')" style="cursor:pointer">' + t.title + '</span><button onclick="del(' + t.id + ')">Delete</button>';
+        list.appendChild(li);
+      });
+    }
+    async function addTodo() {
+      const input = document.getElementById('title');
+      if (!input.value.trim()) return;
+      await fetch('/todos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title: input.value }) });
+      input.value = '';
+      load();
+    }
+    async function toggle(id, done) {
+      await fetch('/todos/' + id, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ done }) });
+      load();
+    }
+    async function del(id) {
+      await fetch('/todos/' + id, { method: 'DELETE' });
+      load();
+    }
+    load();
+  </script>
+</body>
+</html>
